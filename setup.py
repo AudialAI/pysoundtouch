@@ -3,6 +3,8 @@
 """Setup script for the SoundTouch module distribution."""
 
 import os, re, sys, string
+from pathlib import Path
+import itertools
 
 from distutils.core import setup
 from distutils.extension import Extension
@@ -21,7 +23,7 @@ def get_setup():
     r = re.compile(r'(\S+)\s*=\s*(.+)')
     
     if not os.path.isfile('Setup'):
-        print "No 'Setup' file. Perhaps you need to run the configure script."
+        print( "No 'Setup' file. Perhaps you need to run the configure script." )
         sys.exit(1)
         
     f = open('Setup', 'r')
@@ -29,7 +31,7 @@ def get_setup():
     for line in f.readlines():
         m = r.search(line)
         if not m:
-            print "Error in setup file:", line
+            print( "Error in setup file:", line )
             sys.exit(1)
         key = m.group(1)
         val = m.group(2)
@@ -43,13 +45,17 @@ defines = [('VERSION_MAJOR', VERSION_MAJOR),
            ('VERSION_MINOR', VERSION_MINOR),
            ('VERSION', '"%s"' % pysoundtouch_version)]
 
+src_dir = Path( "." ).absolute() / "src"
+
 soundtouchmodule = Extension(
-    name='soundtouchmodule',
-    sources=['src/soundtouchmodule.c', 'src/pysoundtouch.cpp', 'src/pybpmdetect.cpp', 'src/WavFile.cpp'],
+    name='soundtouch',
+    sources=list( map( lambda x: str( x ), itertools.chain( src_dir.glob( "*.cpp" ), src_dir.glob( "*.c" ) ) ) ),
     define_macros = defines,
     include_dirs=[data['soundtouch_include_dir']],
     library_dirs=[data['soundtouch_lib_dir']],
-    libraries=string.split(data['soundtouch_libs']))
+    extra_compile_args=["-fPIC", "-O3", "-fcheck-new"],
+    extra_link_args=["-fPIC"],
+    libraries=str.split(data['soundtouch_libs']))
 
 setup ( # Distribution metadata
     name = "pysoundtouch",
